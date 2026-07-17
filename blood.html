@@ -4,476 +4,119 @@ HTML
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3초 혈당 방어 프로토타입</title>
+    <title>일반인 맞춤형 4단 구조 - 혈액형 분석기</title>
     <style>
-        :root {
-            --primary: #34C759;
-            --warning: #FF9500;
-            --bg-gray: #F2F2F7;
-            --text-dark: #1C1C1E;
-            --text-gray: #8E8E93;
-            --card-bg: #FFFFFF;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        /* 설계안을 시각적으로 깔끔하게 보여주기 위한 기본 스타일링 */
         body {
-            background-color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: var(--text-dark);
-        }
-
-        /* 스마트폰 형태의 Mockup 디자인 */
-        .phone-container {
-            width: 375px;
-            height: 750px;
-            background-color: var(--bg-gray);
-            border: 12px solid #000;
-            border-radius: 40px;
-            position: relative;
-            overflow: hidden;
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #f5f6f7;
+            margin: 0;
+            padding: 40px 20px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        /* 상단 스테이터스 및 앱바 */
-        .app-bar {
-            height: 60px;
-            background-color: var(--card-bg);
-            display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            border-bottom: 1px solid #E5E5EA;
         }
-
-        .app-bar h1 {
-            font-size: 18px;
-            font-weight: 800;
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
         }
-
-        .battery-status {
-            font-size: 13px;
-            background: #E5E5EA;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: bold;
-        }
-
-        /* 탭별 컨텐츠 영역 */
-        .content-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: none;
-        }
-
-        .content-area.active {
-            display: block;
-        }
-
-        /* 카드 공통 스타일 */
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 20px;
-            padding: 20px;
+        h1 {
+            color: #333;
             margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            font-size: 24px;
         }
-
-        .card-title {
-            font-size: 20px;
-            font-weight: 800;
-            line-height: 1.4;
-            margin-bottom: 20px;
-        }
-
-        /* 3초 버튼 레이아웃 */
-        .button-group {
+        .btn-group {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 10px;
+            margin-bottom: 25px;
         }
-
-        .quick-btn {
-            background-color: #F2F2F7;
+        button {
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
             border: none;
-            border-radius: 16px;
-            padding: 15px 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
-
-        .quick-btn:active {
-            transform: scale(0.95);
-            background-color: #E5E5EA;
+        /* 각 혈액형 버튼 색상 테마 */
+        .btn-a { background-color: #ff6b6b; color: white; }
+        .btn-b { background-color: #4dadf7; color: white; }
+        .btn-o { background-color: #51cf66; color: white; }
+        .btn-ab { background-color: #cc5de8; color: white; }
+        button:hover {
+            opacity: 0.85;
+            transform: translateY(-2px);
         }
-
-        .quick-btn .emoji {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-
-        .quick-btn span {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        /* 하단 탭바 */
-        .tab-bar {
-            height: 65px;
-            background-color: var(--card-bg);
-            border-top: 1px solid #E5E5EA;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        .tab-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-            color: var(--text-gray);
-            cursor: pointer;
-        }
-
-        .tab-item.active {
-            color: var(--primary);
-        }
-
-        .tab-item .tab-icon {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
-
-        /* 팝업 모달 시스템 */
-        .modal-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            padding: 20px;
-        }
-
-        .modal-card {
-            background-color: var(--card-bg);
-            border-radius: 24px;
-            padding: 24px;
-            width: 100%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-        }
-
-        .modal-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--warning);
-            margin-bottom: 10px;
-        }
-
-        .modal-body {
-            font-size: 15px;
-            line-height: 1.5;
-            color: var(--text-dark);
-            margin-bottom: 20px;
-        }
-
-        .modal-btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 24px;
-            font-size: 15px;
-            font-weight: 800;
-            width: 100%;
-            cursor: pointer;
-        }
-
-        /* 🚨 SOS 리스트 아이템 */
-        .sos-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .sos-card {
-            background: #FFF;
-            border: 1px solid #E5E5EA;
-            border-radius: 16px;
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-        }
-
-        /* 🛒 과자 영양성분 가이드 */
-        .snack-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px;
-            border-bottom: 1px solid #E5E5EA;
-            cursor: pointer;
-        }
-
-        .snack-img {
-            font-size: 30px;
-            background: #E5E5EA;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-        }
-
-        .snack-info h4 { font-size: 15px; font-weight: bold; }
-        .snack-info p { font-size: 12px; color: var(--text-gray); }
-
-        /* 가상의 가이드 영양성분 가젯 */
-        .nutrition-tag {
-            background-color: #FFE5E5;
-            border: 2px red solid;
+        .result-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
             border-radius: 8px;
-            padding: 5px;
-            font-size: 11px;
-            font-weight: 800;
-            color: red;
-            display: inline-block;
-            margin-top: 5px;
-        }
-
-        /* 📊 리포트 강조 */
-        .report-header {
-            background-color: var(--primary);
-            color: white;
-            border-radius: 20px;
-            padding: 24px;
-            text-align: center;
-            margin-bottom: 20px;
+            padding: 20px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #495057;
         }
     </style>
 </head>
 <body>
 
-<div class="phone-container">
-    <!-- 앱 바 -->
-    <div class="app-bar">
-        <h1 id="page-title">🛡️ 첫입방어</h1>
-        <div class="battery-status" id="battery">🔋 배터리 90%</div>
-    </div>
-
-    <!-- 1번 화면: 첫입방어 -->
-    <div id="tab1" class="content-area active">
-        <div class="card">
-            <div class="card-title">배고파서 쓰러질 것 같아요!<br>지금 뭐부터 먹을까요?</div>
-            <div class="button-group">
-                <button class="quick-btn" onclick="checkFirstEat('veg')">
-                    <span class="emoji">🥬</span>
-                    <span>채소 먼저</span>
-                </button>
-                <button class="quick-btn" onclick="checkFirstEat('protein')">
-                    <span class="emoji">🍗</span>
-                    <span>고기/계란</span>
-                </button>
-                <button class="quick-btn" onclick="checkFirstEat('carb')">
-                    <span class="emoji">🍚</span>
-                    <span>밥/면 먼저</span>
-                </button>
-            </div>
-        </div>
-        <div class="card" style="background-color: #E8F5E9; border: 1px solid var(--primary);">
-            <p style="font-size: 13px; font-weight: bold; color: #2E7D32;">💡 실시간 혈당 소나기 예보 작동 중</p>
-            <p style="font-size: 12px; margin-top: 5px; color: #4CAF50;">아무거나 손 가기 전에 3초 툭 터치로 지키세요!</p>
-        </div>
-    </div>
-
-    <!-- 2번 화면: SOS 구조대 -->
-    <div id="tab2" class="content-area">
-        <p style="margin-bottom: 15px; font-size: 14px; color: var(--text-gray);">잔소리는 싹 빼고 바로 따라할 수 있는 팁만!</p>
-        <div class="sos-grid">
-            <div class="sos-card" onclick="openSOS('회식')">
-                <span style="font-size: 32px;">🍻</span>
-                <p style="margin-top:8px; font-weight: bold; font-size:14px;">회식 자리</p>
-            </div>
-            <div class="sos-card" onclick="openSOS('병원')">
-                <span style="font-size: 32px;">🏥</span>
-                <p style="margin-top:8px; font-weight: bold; font-size:14px;">병원/병가</p>
-            </div>
-            <div class="sos-card" onclick="openSOS('배달')">
-                <span style="font-size: 32px;">🛵</span>
-                <p style="margin-top:8px; font-weight: bold; font-size:14px;">배달 음식</p>
-            </div>
-            <div class="sos-card" onclick="openSOS('카페')">
-                <span style="font-size: 32px;">☕</span>
-                <p style="margin-top:8px; font-weight: bold; font-size:14px;">디저트/카페</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3번 화면: 편의점 꿀템 -->
-    <div id="tab3" class="content-area">
-        <p style="margin-bottom: 15px; font-size: 14px; color: var(--text-gray);">오후 4시, 입 터지기 직전에 이것만 사세요.</p>
-        <div class="card" style="padding: 10px 0;">
-            <div class="snack-item" onclick="openSnack('단백질 칩')">
-                <div class="snack-img">🍪</div>
-                <div class="snack-info">
-                    <h4>프로틴 초코칩 쿠키</h4>
-                    <p>당류 2g | 단백질 10g (체크 완료)</p>
-                </div>
-            </div>
-            <div class="snack-item" onclick="openSnack('아몬드 음료')">
-                <div class="snack-img">🥛</div>
-                <div class="snack-info">
-                    <h4>무당 아몬드 밀크</h4>
-                    <p>당류 0.2g | 부담없는 영양성분</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4번 화면: 내 몸 리포트 -->
-    <div id="tab4" class="content-area">
-        <div class="report-header">
-            <span style="font-size: 40px;">🥳</span>
-            <h2 style="font-size: 22px; font-weight: 900; margin-top: 10px;">방어 성공률 80%!</h2>
-            <p style="font-size: 14px; opacity: 0.9; margin-top: 5px;">지난주보다 몸이 가벼워졌어요</p>
-        </div>
-        <div class="card">
-            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 12px;">🔍 탐정 리포트가 찾아낸 진짜 변화</h3>
-            <div style="font-size: 14px; line-height: 1.6;">
-                <p style="margin-bottom: 8px;">✔️ <strong>식후 졸림 횟수:</strong> 지난주보다 3회 줄어듦!</p>
-                <p style="color: var(--primary); font-weight: bold;">💡 "채소 먼저" 터치하고 식사하신 날은 오후 집중도가 훨씬 높았습니다!</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 네비게이션 탭 바 -->
-    <div class="tab-bar">
-        <div class="tab-item active" onclick="switchTab(1, '🛡️ 첫입방어')">
-            <span class="tab-icon">🛡️</span>
-            <span>첫입방어</span>
-        </div>
-        <div class="tab-item" onclick="switchTab(2, '🚨 SOS 구조대')">
-            <span class="tab-icon">🚨</span>
-            <span>SOS구조대</span>
-        </div>
-        <div class="tab-item" onclick="switchTab(3, '🛒 마트꿀템')">
-            <span class="tab-icon">🛒</span>
-            <span>편의점</span>
-        </div>
-        <div class="tab-item" onclick="switchTab(4, '📊 내몸 리프트')">
-            <span class="tab-icon">📊</span>
-            <span>리포트</span>
-        </div>
-    </div>
-
-    <!-- 모달(팝업) 시스템 구조 -->
-    <div class="modal-overlay" id="modal">
-        <div class="modal-card">
-            <div class="modal-icon" id="m-icon">⚠️</div>
-            <div class="modal-title" id="m-title">경고!</div>
-            <div class="modal-body" id="m-body">내용이 표시됩니다.</div>
-            <button class="modal-btn" onclick="closeModal()">확인했어요</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // 탭 전환 시스템
-    function switchTab(index, title) {
-        document.querySelectorAll('.content-area').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+    <div class="container">
+        <h1>🩸 혈액형 성향 분석기</h1>
+        <p style="color: #868e96; margin-bottom: 20px;">자신의 혈액형을 선택하면 백엔드 서버에서 분석 데이터를 가져옵니다.</p>
         
-        document.getElementById('tab' + index).classList.add('active');
-        document.querySelectorAll('.tab-item')[index-1].classList.add('active');
-        document.getElementById('page-title').innerText = title;
-    }
+        <!-- 1. 사용자가 클릭할 혈액형 버튼 그룹 (이벤트 연결) -->
+        <div class="btn-group">
+            <button class="btn-a" onclick="fetchBloodAnalysis('A')">A형</button>
+            <button class="btn-b" onclick="fetchBloodAnalysis('B') font-weight">B형</button>
+            <button class="btn-o" onclick="fetchBloodAnalysis('O')">O형</button>
+            <button class="btn-ab" onclick="fetchBloodAnalysis('AB')">AB형</button>
+        </div>
 
-    // 팝업 모달 제어
-    function openModal(icon, title, body, color) {
-        document.getElementById('m-icon').innerText = icon;
-        document.getElementById('m-title').innerText = title;
-        document.getElementById('m-body').innerHTML = body;
-        document.getElementById('m-title').style.color = color || 'var(--warning)';
-        document.getElementById('modal').style.display = 'flex';
-    }
+        <!-- 2. 백엔드에서 받아온 분석 결과가 출력될 구역 -->
+        <div class="result-box" id="result-area">
+            혈액형 버튼을 누르면 실시간 분석 결과가 여기에 표시됩니다.
+        </div>
+    </div>
 
-    function closeModal() {
-        document.getElementById('modal').style.display = 'none';
-    }
+    <!-- 3. 시스템 연산을 담당할 백엔드 통신 자바스크립트 소스코드 -->
+    <script>
+        // 백엔드 API와 통신하여 결과를 화면에 주입하는 함수
+        async function fetchBloodAnalysis(selectedBloodType) {
+            const resultArea = document.getElementById('result-area');
+            
+            // 사용자가 지루하지 않게 로딩 상태를 표시해 줍니다.
+            resultArea.innerText = '백엔드 엔진에서 성향 분석 중... ⚙️';
 
-    // 🧱 1번: 첫입방어 체크 로직
-    function checkFirstEat(type) {
-        if(type === 'carb') {
-            openModal(
-                '🛑 잠깐!', 
-                '폭우 에러 감지!', 
-                '지금 빈속에 밥이나 면을 드시면 혈당 소나기(스파이크)가 옵니다.<br><br><strong>식탁 위에 있는 계란후라이나 고기 반찬 한 입만 먼저 드세요!</strong>', 
-                '#FF3B30'
-            );
-        } else if (type === 'veg') {
-            openModal('🥬 Perfect!', '최고의 선택입니다!', '식이섬유가 먼저 장을 코팅하여 혈당이 안정적으로 유지됩니다. 최고의 방어입니다.', 'var(--primary)');
-        } else {
-            openModal('🍗 Good Job!', '좋은 선택입니다!', '단백질이 위장에 먼저 들어가 위장 운동을 늦추어 스파이크를 효과적으로 막아줍니다.', 'var(--primary)');
+            try {
+                // 우리가 설계한 로컬 자바 백엔드 서버 주소로 요청 전송 (GET 방식)
+                const response = await fetch(`http://localhost:8080/api/blood?bloodType=${selectedBloodType}`);
+                
+                if (!response.ok) {
+                    throw new Error('서ver 응답에 실패했습니다.');
+                }
+
+                // 백엔드가 던져준 표준 JSON 데이터를 파싱
+                const data = await response.json();
+                
+                // 화면의 result-box 영역에 백엔드가 계산한 비즈니스 로직 결과 반영
+                resultArea.innerHTML = `<strong>[${data.bloodType}형 분석 결과]</strong><br>${data.result}`;
+
+            } catch (error) {
+                console.error('통신 실패 오류 내용:', error);
+                resultArea.innerHTML = '<span style="color: #e03131; font-weight: bold;">⚠️ 백엔드 서버(Port: 8080)가 켜져 있지 않습니다.<br>자바 서버를 구동한 후 다시 시도해 주세요.</span>';
+            }
         }
-    }
-
-    // 🧱 2번: SOS 상황 가이드 로직
-    function openSOS(type) {
-        let title = "";
-        let body = "";
-        if (type === '회식') {
-            title = '회식 자리 치트키';
-            body = '샐러드 싸오라는 <strong>잔소리는 싹 필터링</strong>했습니다.<br><br>👉 중식당 회식인가요?<br>짜장면 비비기 전에 반찬으로 나온 <strong>양파를 춘장에 콕 찍어 먼저 세 개 드세요!</strong> 섬유질이 위장막을 지킵니다.';
-        } else if (type === '병원') {
-            title = '병원 SOS 치트키';
-            body = '꼼짝 못 하는 상황이시군요.<br><br>👉 간식이 너무 당길 때는 병원 밥 먹고 바로 뒤이어 후식으로 딱 한 입만 드세요! 따로 드시는 것보다 훨씬 안전합니다.';
-        } else if (type === '배달') {
-            title = '배달음식 타협책';
-            body = '치킨/피자가 오는 중인가요?<br><br>👉 죄책감은 내려놓고, 배달이 도착하면 콜라 대신 <strong>냉장고에 있는 생수 한 컵</strong>을 마신 뒤, <strong>치킨 무(식이섬유/산 성분) 2개</strong>를 먼저 아작아작 드셔주세요.';
-        } else {
-            title = '카페 생존 수칙';
-            body = '케이크가 당기시나요?<br><br>👉 아메리카노나 차(Tea)를 동반해 주세요. 단 음료와 단 디저트의 최악의 조합만 피하면 80%는 성공입니다!';
-        }
-        openModal('🚨', title, body, '#007AFF');
-    }
-
-    // 🧱 3번: 편의점 꿀템
-    function openSnack(name) {
-        let info = "";
-        if(name === '단백질 칩') {
-            info = '과자 패키지 뒷면을 보세요.<br><br><div class="nutrition-tag">⚠️ 당류 2g (합격)</div><br><br>오후 4시에 당이 요동칠 때 입막음용 최적의 아이템입니다.';
-        } else {
-            info = '아몬드 음료 영양표시를 확인하세요.<br><br><div class="nutrition-tag">⚠️ 당류 0.2g (초합격)</div><br><br>라떼가 먹고 싶을 때 대체재로 적극 추천합니다.';
-        }
-        openModal('🛒', name + ' 뒷면 가이드', info, 'var(--primary)');
-    }
-</script>
+    </script>
 </body>
 </html>
